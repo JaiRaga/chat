@@ -4,6 +4,7 @@ const socketio = require('socket.io')
 const http = require('http')
 const cors = require('cors')
 const Filter = require('bad-words')
+const { getMessage } = require('./utils/messages')
 const app = express()
 
 app.use(express.json())
@@ -19,9 +20,9 @@ app.use(express.static(pathtoPublicDir))
 io.on('connection', (socket) => {
 	console.log('New Socket Connection!')
 
-	socket.emit('message', 'Welcome!')
+	socket.emit('message', getMessage('Welcome!'))
 
-	socket.broadcast.emit('message', 'A User has entered the chat.')
+	socket.broadcast.emit('message', getMessage('A User has entered the chat.'))
 
 	// Sending messages
 	socket.on('sendMessage', (message, callback) => {
@@ -32,22 +33,24 @@ io.on('connection', (socket) => {
 
 		console.log(message)
 
-		io.emit('message', message)
+		io.emit('message', getMessage(message))
 
 		callback('Delivered!')
 	})
 
 	socket.on('disconnect', () => {
-		io.emit('message', 'A User has left the chat.')
+		io.emit('message', getMessage('A User has left the chat.'))
 	})
 
 	// Sending locations
 	socket.on('sendLocation', (location, cb) => {
 		const { latitude, longitude } = location
+
 		socket.broadcast.emit(
-			'message',
+			'locationMessage',
 			`https://google.com/maps?q=${latitude},${longitude}`
 		)
+
 		cb('Location Shared!')
 	})
 
