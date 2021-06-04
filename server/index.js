@@ -48,7 +48,7 @@ io.on('connection', (socket) => {
 
 		socket.broadcast.emit(
 			'locationMessage',
-			`https://google.com/maps?q=${latitude},${longitude}`
+			getMessage(`https://google.com/maps?q=${latitude},${longitude}`)
 		)
 
 		cb('Location Shared!')
