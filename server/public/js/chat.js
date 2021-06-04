@@ -9,7 +9,7 @@ const $messages = document.querySelector('#messages')
 // Template
 const $messageTemplate = document.querySelector('#message-template').innerHTML
 const $locationTemplate = document.querySelector(
-	'#my-current-location'
+	'#location-message-template'
 ).innerHTML
 
 socket.on('message', (message) => {
@@ -23,10 +23,13 @@ socket.on('message', (message) => {
 	$messages.insertAdjacentHTML('beforeend', html)
 })
 
-socket.on('locationMessage', (location) => {
-	console.log('locationMessage', location)
+socket.on('locationMessage', (message) => {
+	console.log('locationMessage', message)
 
-	const html = Mustache.render($locationTemplate, { location })
+	const html = Mustache.render($locationTemplate, {
+		location: message.text,
+		createdAt: moment(message.createdAt).format('h:mm a'),
+	})
 
 	$messages.insertAdjacentHTML('beforeend', html)
 })
