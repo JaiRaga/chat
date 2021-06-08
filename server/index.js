@@ -4,7 +4,10 @@ const socketio = require('socket.io')
 const http = require('http')
 const cors = require('cors')
 const Filter = require('bad-words')
-const { getMessage } = require('./utils/messages')
+const { getMessage, getLocationMessage } = require('./utils/messages')
+require('./db/mongoose')
+const Chat = require('./models/Chat')
+
 const app = express()
 
 app.use(express.json())
@@ -16,52 +19,102 @@ const io = socketio(server)
 const pathtoPublicDir = path.join(__dirname, 'public')
 app.use(express.static(pathtoPublicDir))
 
-// let count = 0
 io.on('connection', (socket) => {
 	console.log('New Socket Connection!')
 
-	socket.emit('message', getMessage('Welcome!'))
+	// Joining rooms
+	socket.on('join', async ({ username, room }, callback) => {
+		try {
+			// add user
+			const user = new Chat({ socketId: socket.id, username, room })
+			await user.save()
 
-	socket.broadcast.emit('message', getMessage('A User has entered the chat.'))
+			// Get users in a room
+			const users = await Chat.find({ room: user.room })
+			// console.log(users)
+			socket.join(user.room)
+			socket.emit('message', getMessage('Admin', 'Welcome!'))
 
-	// Sending messages
-	socket.on('sendMessage', (message, callback) => {
-		const filter = new Filter()
-		if (filter.isProfane(message)) {
-			return callback('Profanity is not allowed!')
+			socket.broadcast
+				.to(user.room)
+				.emit(
+					'message',
+					getMessage('Admin', `${username} has entered the chat`)
+				)
+
+			io.to(user.room).emit('roomData', {
+				room: user.room,
+				users,
+			})
+		} catch (err) {
+			console.log('error from adding users', err)
+			callback(err)
 		}
-
-		console.log(message)
-
-		io.emit('message', getMessage(message))
-
-		callback('Delivered!')
 	})
 
-	socket.on('disconnect', () => {
-		io.emit('message', getMessage('A User has left the chat.'))
+	// Sending messages
+	socket.on('sendMessage', async (message, callback) => {
+		try {
+			// get user by socket id
+			const user = await Chat.findOne({ socketId: socket.id })
+			console.log(user)
+			const filter = new Filter()
+			if (filter.isProfane(message)) {
+				return callback('Profanity is not allowed!')
+			}
+			console.log(message)
+			io.to(user.room).emit('message', getMessage(user.username, message))
+			callback('Delivered!')
+		} catch (err) {
+			console.log(err)
+		}
 	})
 
 	// Sending locations
-	socket.on('sendLocation', (location, cb) => {
-		const { latitude, longitude } = location
-
-		socket.broadcast.emit(
-			'locationMessage',
-			getMessage(`https://google.com/maps?q=${latitude},${longitude}`)
-		)
-
-		cb('Location Shared!')
+	socket.on('sendLocation', async (location, cb) => {
+		try {
+			// get user by socket id
+			const user = await Chat.findOne({ socketId: socket.id })
+			console.log(user)
+			const { latitude, longitude } = location
+			socket.broadcast
+				.to(user.room)
+				.emit(
+					'locationMessage',
+					getMessage(
+						user.username,
+						`https://google.com/maps?q=${latitude},${longitude}`
+					)
+				)
+			cb('Location Shared!')
+		} catch (err) {
+			console.log(err)
+		}
 	})
 
-	// socket.emit('message', message)
-
-	// socket.emit('countUpdated', count)
-
-	// socket.on('increment', () => {
-	// 	++count
-	// 	io.emit('countUpdated', count)
-	// })
+	socket.on('disconnect', async () => {
+		try {
+			console.log('Disconnect')
+			// remove user
+			const user = await Chat.findOneAndDelete({ socketId: socket.id })
+			console.log('disconnecting', user)
+			// Get users in a room
+			const users = await Chat.find({ room: { $eq: user.room } })
+			console.log('users on disconnect', users)
+			if (user) {
+				io.to(user.room).emit(
+					'message',
+					getMessage(user.username, `${user.username} has left the chat`)
+				)
+				io.to(user.room).emit('roomData', {
+					room: user.room,
+					users,
+				})
+			}
+		} catch (err) {
+			console.log(err)
+		}
+	})
 })
 
 const PORT = process.env.PORT || 9000
