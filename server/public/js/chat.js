@@ -1,5 +1,6 @@
 const socket = io()
 
+// Elements
 const $messageForm = document.querySelector('#message-form')
 const $messageFormInput = $messageForm.querySelector('input')
 const $messageFormButton = $messageForm.querySelector('button')
@@ -11,6 +12,13 @@ const $messageTemplate = document.querySelector('#message-template').innerHTML
 const $locationTemplate = document.querySelector(
 	'#location-message-template'
 ).innerHTML
+
+// Query String
+const { username, room } = Qs.parse(location.search, {
+	ignoreQueryPrefix: true,
+})
+
+socket.emit('join', { username, room })
 
 socket.on('message', (message) => {
 	console.log(message)
