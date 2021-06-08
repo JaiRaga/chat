@@ -4,7 +4,7 @@ const socketio = require('socket.io')
 const http = require('http')
 const cors = require('cors')
 const Filter = require('bad-words')
-const { getMessage, getLocationMessage } = require('./utils/messages')
+const { getMessage } = require('./utils/messages')
 require('./db/mongoose')
 const Chat = require('./models/Chat')
 
