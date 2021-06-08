@@ -16,5 +16,4 @@ const getMessage = (username, text) => {
 
 module.exports = {
 	getMessage,
-	getLocationMessage,
 }
