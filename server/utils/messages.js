@@ -1,10 +1,20 @@
-const getMessage = (text) => {
+const getMessage = (username, text) => {
 	return {
-		text: text,
+		username,
+		text,
 		createdAt: new Date(),
 	}
 }
 
+// const getLocationMessage = (username, url) => {
+// 	return {
+// 		username,
+// 		url,
+// 		createdAt: new Date(),
+// 	}
+// }
+
 module.exports = {
 	getMessage,
+	getLocationMessage,
 }
