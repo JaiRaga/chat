@@ -37,7 +37,7 @@ io.on('connection', (socket) => {
 				'message',
 				getMessage(
 					'Admin',
-					'Welcome!, This is a demo app intended for me to get hired. Cheers!'
+					'Welcome, This is a demo app intended for me to get hired. Cheers!'
 				)
 			)
 
