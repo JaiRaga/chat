@@ -33,7 +33,13 @@ io.on('connection', (socket) => {
 			const users = await Chat.find({ room: user.room })
 			// console.log(users)
 			socket.join(user.room)
-			socket.emit('message', getMessage('Admin', 'Welcome!'))
+			socket.emit(
+				'message',
+				getMessage(
+					'Admin',
+					'Welcome!, This is a demo app intended for me to get hired. Cheers!'
+				)
+			)
 
 			socket.broadcast
 				.to(user.room)
@@ -96,7 +102,7 @@ io.on('connection', (socket) => {
 		try {
 			console.log('Disconnect')
 			// remove user
-			const user = await Chat.findOneAndDelete({ socketId: socket.id })
+			const user = await Chat.findOne({ socketId: socket.id })
 			console.log('disconnecting', user)
 			// Get users in a room
 			const users = await Chat.find({ room: { $eq: user.room } })
